@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-i3ae6(p@od#!!0l%cwrf5wf(+4hq_k*9x#3vp%bs8*m#**+kyn
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -75,8 +75,12 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'foodgram_db',
+        'USER': 'fg_user',
+        'PASSWORD': 'database',
+        'HOST': '127.0.0.1',
+        'PORT': 5432,
     }
 }
 
