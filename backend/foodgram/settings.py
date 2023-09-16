@@ -137,3 +137,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ),
 }
+
+DJOSER = {
+    'HIDE_USERS': False
+}

@@ -18,8 +18,12 @@ class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+
     def __str__(self):
-        return f'{self.first_name} {self.last_name}'
+        return f'{self.first_name} {self.last_name} ({self.username})'
 
 
 class Ingridient(models.Model):
@@ -28,14 +32,23 @@ class Ingridient(models.Model):
         max_length=200, verbose_name='Единицы измерения'
     )
 
+    class Meta:
+        verbose_name = 'Ингридиент'
+        verbose_name_plural = 'Ингридиенты'
+        ordering = ['name']
+
     def __str__(self):
-        return self.name
+        return f'{self.name}, {self.measurement_unit}'
 
 
 class Tag(models.Model):
     name = models.CharField(max_length=200, verbose_name='Тег')
     color = models.CharField(max_length=7, verbose_name='Цвет', null=True)
     slug = models.CharField(max_length=200, null=True)
+
+    class Meta:
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
 
     def __str__(self):
         return self.name
@@ -69,8 +82,12 @@ class Recipe(models.Model):
         verbose_name='Время приготовления (в минутах)'
     )
 
+    class Meta:
+        verbose_name = 'Рецепт'
+        verbose_name_plural = 'Рецепты'
+
     def __str__(self):
-        return self.name
+        return f'{self.name} ({self.author})'
 
 
 class RecipeIngridient(models.Model):
