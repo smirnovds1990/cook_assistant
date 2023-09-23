@@ -75,7 +75,7 @@ class Recipe(models.Model):
     name = models.CharField(max_length=200, verbose_name='Название')
     image = models.ImageField(
         verbose_name='Фотография', upload_to='recipes/images/', null=True,
-        default=None
+        default=None, blank=True
     )
     text = models.TextField(verbose_name='Описание')
     cooking_time = models.IntegerField(
@@ -94,3 +94,10 @@ class RecipeIngridient(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     ingridient = models.ForeignKey(Ingridient, on_delete=models.CASCADE)
     amount = models.PositiveSmallIntegerField(verbose_name='Количество')
+
+    class Meta:
+        verbose_name = 'Ингридиент в рецепте'
+        verbose_name_plural = 'Ингридиенты в рецептах'
+
+    def __str__(self):
+        return f'{self.ingridient.name} ({self.recipe.name})'

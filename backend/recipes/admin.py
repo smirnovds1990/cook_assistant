@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Ingridient, Recipe, Tag, User
+from .models import Ingridient, Recipe, RecipeIngridient, Tag, User
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -14,6 +14,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
 
 class IngridientAdmin(admin.ModelAdmin):
+    readonly_fields = ['id']
     list_filter = ['name']
     search_fields = ['name']
 
@@ -22,3 +23,4 @@ admin.site.register(User, UserAdmin)
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(Ingridient, IngridientAdmin)
 admin.site.register(Tag)
+admin.site.register(RecipeIngridient)
