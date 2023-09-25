@@ -1,7 +1,10 @@
 from rest_framework import mixins, viewsets
 
 from recipes.models import Ingridient, Recipe, Tag
-from .serializers import IngridientSerializer, RecipeSerializer, TagSerializer
+from .serializers import (
+    IngridientSerializer, RecipeReadSerializer, RecipeWriteSerializer,
+    TagSerializer
+)
 
 
 class TagViewSet(
@@ -15,7 +18,11 @@ class TagViewSet(
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
+
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return RecipeReadSerializer
+        return RecipeWriteSerializer
 
 
 class IngridientViewSet(viewsets.ModelViewSet):
