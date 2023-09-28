@@ -76,12 +76,17 @@ class RecipeIngridientWriteSerializer(serializers.ModelSerializer):
         )
         representation = []
         for recipe_ingridient in recipe_ingridients:
-            representation.append(
-                {
-                    'id': instance.id,
-                    'amount': recipe_ingridient.amount
-                }
-            )
+            for rep in representation:
+                if rep['id'] == instance.id:
+                    rep['amount'] = recipe_ingridient.amount
+                    break
+            else:
+                representation.append(
+                    {
+                        'id': instance.id,
+                        'amount': recipe_ingridient.amount
+                    }
+                )
         return representation
 
 
