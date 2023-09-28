@@ -92,7 +92,9 @@ class Recipe(models.Model):
 
 class RecipeIngridient(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    ingridient = models.ForeignKey(Ingridient, on_delete=models.CASCADE)
+    ingridient = models.ForeignKey(
+        Ingridient, on_delete=models.CASCADE, related_name='ingridient_amount'
+    )
     amount = models.PositiveSmallIntegerField(verbose_name='Количество')
 
     class Meta:

@@ -48,7 +48,7 @@ class TagSerializer(serializers.ModelSerializer):
 class IngridientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingridient
-        fields = ['id', 'name', 'measurement_unit']
+        fields = ['name', 'measurement_unit']
 
 
 class RecipeIngridientReadSerializer(serializers.ModelSerializer):
@@ -64,72 +64,72 @@ class RecipeIngridientReadSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngridientWriteSerializer(serializers.ModelSerializer):
-    ingridient = serializers.PrimaryKeyRelatedField(
-        queryset=Ingridient.objects.all()
-    )
+    id = serializers.PrimaryKeyRelatedField(queryset=Ingridient.objects.all())
 
     class Meta:
         model = RecipeIngridient
-        fields = ['ingridient', 'amount']
+        fields = ['id', 'amount']
+
+    def to_representation(self, instance):
+        recipe_ingridients = RecipeIngridient.objects.filter(
+            ingridient=instance
+        )
+        representation = []
+        for recipe_ingridient in recipe_ingridients:
+            representation.append(
+                {
+                    'id': instance.id,
+                    'amount': recipe_ingridient.amount
+                }
+            )
+        return representation
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
-    author = UserSerializer(read_only=True, required=False)
+    author = UserSerializer(read_only=True)
     ingridients = RecipeIngridientReadSerializer(
         many=True, source='recipeingridient_set', read_only=True
     )
     image = Base64ImageField(required=False, allow_null=True)
-    image_url = serializers.SerializerMethodField(
-        'get_image_url',
-        read_only=True,
-    )
     tags = TagSerializer(read_only=True, many=True)
 
     class Meta:
         model = Recipe
         fields = [
             'id', 'tags', 'author', 'ingridients', 'is_favorited',
-            'is_in_shopping_cart', 'name', 'image', 'image_url',
-            'text', 'cooking_time'
+            'is_in_shopping_cart', 'name', 'image', 'text',
+            'cooking_time'
         ]
         read_only_fields = ['is_favorited', 'is_in_shopping_cart']
-
-    def get_image_url(self, obj):
-        if obj.image:
-            return obj.image.url
-        return None
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
     author = UserSerializer(required=False)
     ingridients = RecipeIngridientWriteSerializer(many=True)
     image = Base64ImageField(required=False, allow_null=True)
-    image_url = serializers.SerializerMethodField(
-        'get_image_url',
-        read_only=True,
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(), many=True
     )
-    tags = TagSerializer(read_only=True, many=True)
 
     class Meta:
         model = Recipe
         fields = [
             'id', 'tags', 'author', 'ingridients', 'is_favorited',
-            'is_in_shopping_cart', 'name', 'image', 'image_url',
-            'text', 'cooking_time'
+            'is_in_shopping_cart', 'name', 'image', 'text', 'cooking_time'
         ]
         read_only_fields = ['is_favorited', 'is_in_shopping_cart']
 
-    def get_image_url(self, obj):
-        if obj.image:
-            return obj.image.url
-        return None
-
     def create(self, validated_data):
         ingridients_data = validated_data.pop('ingridients')
+        tags_data = validated_data.pop('tags')
         author = self.context['request'].user
         recipe = Recipe.objects.create(author=author, **validated_data)
+        recipe.tags.set(tags_data)
         for ingridient_data in ingridients_data:
-            RecipeIngridient.objects.create(recipe=recipe, **ingridient_data)
+            RecipeIngridient.objects.create(
+                recipe=recipe, ingridient=ingridient_data['id'],
+                amount=ingridient_data['amount']
+            )
         return recipe
 
     def update(self, instance, validated_data):
@@ -137,5 +137,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         instance = super().update(instance, validated_data)
         instance.recipeingridient_set.all().delete()
         for ingridient_data in ingridients_data:
-            RecipeIngridient.objects.create(recipe=instance, **ingridient_data)
+            RecipeIngridient.objects.create(
+                recipe=instance, ingridient=ingridient_data['id'],
+                amount=ingridient_data['amount']
+            )
         return instance
