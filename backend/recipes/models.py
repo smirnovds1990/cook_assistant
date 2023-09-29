@@ -81,10 +81,14 @@ class Recipe(models.Model):
     cooking_time = models.IntegerField(
         verbose_name='Время приготовления (в минутах)'
     )
+    publication_date = models.DateTimeField(
+        auto_now_add=True, verbose_name='Дата публикации'
+    )
 
     class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
+        ordering = ['-publication_date']
 
     def __str__(self):
         return f'{self.name} ({self.author})'

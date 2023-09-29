@@ -9,7 +9,9 @@ class UserAdmin(admin.ModelAdmin):
 
 
 class RecipeAdmin(admin.ModelAdmin):
-    readonly_fields = ('is_in_shopping_cart', 'is_favorited')
+    readonly_fields = (
+        'is_in_shopping_cart', 'is_favorited', 'publication_date'
+    )
     list_filter = ['author', 'name', 'tags']
 
 
