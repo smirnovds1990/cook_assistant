@@ -1,4 +1,5 @@
-from rest_framework import mixins, viewsets
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, mixins, permissions, viewsets
 
 from recipes.models import Ingridient, Recipe, Tag
 from .serializers import (
@@ -18,6 +19,12 @@ class TagViewSet(
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['author', 'tags']
+
+    # def get_queryset(self):
+    #     return Recipe.objects.filter(author=self.request.user)
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
@@ -28,3 +35,5 @@ class RecipeViewSet(viewsets.ModelViewSet):
 class IngridientViewSet(viewsets.ModelViewSet):
     queryset = Ingridient.objects.all()
     serializer_class = IngridientSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
