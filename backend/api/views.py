@@ -35,9 +35,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['author', 'tags']
 
-    # def get_queryset(self):
-    #     return Recipe.objects.filter(author=self.request.user)
-
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
             return RecipeReadSerializer

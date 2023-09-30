@@ -40,22 +40,6 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['is_subscribed']
 
 
-class UserWithRecipeSerializer(serializers.ModelSerializer):
-    is_subscribed = serializers.SerializerMethodField()
-
-    class Meta:
-        model = User
-        fields = [
-            'id', 'first_name', 'last_name', 'username', 'email',
-            'is_subscribed'
-        ]
-
-    def get_is_subscribed(self, obj):
-        if obj.follower:
-            return True
-        return False
-
-
 class TagSerializer(serializers.ModelSerializer):
     color = ColorField()
 
@@ -167,6 +151,40 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 amount=ingridient_data['amount']
             )
         return instance
+
+
+class RecipeReadForFollowerSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Recipe
+        fields = ['id', 'name', 'image', 'cooking_time']
+
+
+class UserWithRecipeSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'first_name', 'last_name', 'username', 'email',
+            'is_subscribed', 'recipes', 'recipes_count'
+        ]
+
+    def get_is_subscribed(self, obj):
+        if obj.follower:
+            return True
+        return False
+
+    def get_recipes(self, obj):
+        recipes = Recipe.objects.filter(author=obj)
+        serializer = RecipeReadForFollowerSerializer(recipes, many=True)
+        return serializer.data
+
+    def get_recipes_count(self, obj):
+        recipes = Recipe.objects.filter(author=obj)
+        return recipes.count()
 
 
 class FollowSerializer(serializers.ModelSerializer):
