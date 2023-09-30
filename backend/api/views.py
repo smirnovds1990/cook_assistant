@@ -19,6 +19,18 @@ class CustomUserViewSet(UserViewSet):
         serializer = FollowSerializer(following, many=True)
         return Response(serializer.data)
 
+    @action(methods=['post', 'delete'], detail=True)
+    def subscribe(self, request, id=None):
+        user = request.user
+        following = User.objects.get(id=id)
+        if self.request.method == 'POST':
+            follow = Follow.objects.create(follower=user, following=following)
+            serializer = FollowSerializer(follow)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        follow = Follow.objects.get(follower=user, following=following)
+        follow.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class TagViewSet(
     mixins.ListModelMixin,
