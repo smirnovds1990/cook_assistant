@@ -3,8 +3,11 @@ import re
 
 from django.core.files.base import ContentFile
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
-from recipes.models import Ingridient, Recipe, RecipeIngridient, Tag, User
+from recipes.models import (
+    Follow, Ingridient, Recipe, RecipeIngridient, Tag, User
+)
 
 
 class ColorField(serializers.CharField):
@@ -34,7 +37,23 @@ class UserSerializer(serializers.ModelSerializer):
             'id', 'first_name', 'last_name', 'username', 'email',
             'is_subscribed'
         ]
-        read_only_fields = ['email', 'is_subscribed', 'username']
+        read_only_fields = ['is_subscribed']
+
+
+class UserWithRecipeSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'first_name', 'last_name', 'username', 'email',
+            'is_subscribed'
+        ]
+
+    def get_is_subscribed(self, obj):
+        if obj.follower:
+            return True
+        return False
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -71,6 +90,7 @@ class RecipeIngridientWriteSerializer(serializers.ModelSerializer):
         fields = ['id', 'amount']
 
     def to_representation(self, instance):
+        """Метод для корректной записи amount в RecipeIngridient."""
         recipe_ingridients = RecipeIngridient.objects.filter(
             ingridient=instance
         )
@@ -147,3 +167,33 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 amount=ingridient_data['amount']
             )
         return instance
+
+
+class FollowSerializer(serializers.ModelSerializer):
+    following = UserWithRecipeSerializer(
+        read_only=True, default=serializers.CurrentUserDefault()
+    )
+
+    class Meta:
+        model = Follow
+        fields = ['following']
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Follow.objects.all(), fields=['follower', 'following']
+            )
+        ]
+
+    def to_representation(self, instance):
+        """Изменение формата вывода поля following."""
+        representation = super().to_representation(instance)
+        new_representation = representation.pop('following')
+        return new_representation
+
+    def validate_following(self, value):
+        """Валидация подписки на самого себя."""
+        user = self.context['request'].user
+        if value == user:
+            raise serializers.ValidationError(
+                'Нельзя подписаться на самого себя!'
+            )
+        return value

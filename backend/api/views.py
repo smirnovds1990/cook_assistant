@@ -1,11 +1,23 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, mixins, permissions, viewsets
+from djoser.views import UserViewSet
+from rest_framework import filters, mixins, permissions, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
-from recipes.models import Ingridient, Recipe, Tag
+from recipes.models import Follow, Ingridient, Recipe, Tag, User
 from .serializers import (
-    IngridientSerializer, RecipeReadSerializer, RecipeWriteSerializer,
-    TagSerializer
+    FollowSerializer, IngridientSerializer, RecipeReadSerializer,
+    RecipeWriteSerializer, TagSerializer, UserSerializer
 )
+
+
+class CustomUserViewSet(UserViewSet):
+    @action(methods=['get'], detail=False)
+    def subscriptions(self, request):
+        user = request.user
+        following = user.follower.all()
+        serializer = FollowSerializer(following, many=True)
+        return Response(serializer.data)
 
 
 class TagViewSet(

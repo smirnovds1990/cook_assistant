@@ -95,6 +95,7 @@ class Recipe(models.Model):
 
 
 class RecipeIngridient(models.Model):
+    """Промежуточная модель для добавления количества ингридиента."""
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     ingridient = models.ForeignKey(
         Ingridient, on_delete=models.CASCADE, related_name='ingridient_amount'
@@ -107,3 +108,33 @@ class RecipeIngridient(models.Model):
 
     def __str__(self):
         return f'{self.ingridient.name} ({self.recipe.name})'
+
+
+class Follow(models.Model):
+    """Модель для подписок на пользователей."""
+    follower = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='follower'
+    )
+    following = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='following'
+    )
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['follower', 'following'],
+                name='unique_follow'
+            )
+        ]
+
+    def __str__(self):
+        return (
+            f'Follower: '
+            f'{self.follower.first_name} '
+            f'{self.follower.last_name}; '
+            f'Following: '
+            f'{self.following.first_name} '
+            f'{self.following.last_name}'
+        )
