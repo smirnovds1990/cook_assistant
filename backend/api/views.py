@@ -4,10 +4,13 @@ from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from recipes.models import Follow, Ingridient, Recipe, Tag, User
+from recipes.models import (
+    Favorite, Follow, Ingridient, Recipe, ShoppingCart, Tag, User
+)
 from .serializers import (
-    FollowSerializer, IngridientSerializer, RecipeReadSerializer,
-    RecipeWriteSerializer, TagSerializer, UserSerializer
+    FavoriteSerializer, FollowSerializer, IngridientSerializer,
+    RecipeReadSerializer, RecipeWriteSerializer, TagSerializer,
+    UserSerializer
 )
 
 
@@ -51,6 +54,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return RecipeReadSerializer
         return RecipeWriteSerializer
+
+    @action(methods=['post', 'delete'], detail=True)
+    def favorite(self, request, pk=None):
+        user = request.user
+        recipe = Recipe.objects.get(pk=pk)
+        if self.request.method == 'POST':
+            favorite = Favorite.objects.create(
+                follower=user, recipe=recipe)
+            serializer = FavoriteSerializer(favorite)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        favorite = Favorite.objects.get(follower=user, recipe=recipe)
+        favorite.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class IngridientViewSet(viewsets.ModelViewSet):

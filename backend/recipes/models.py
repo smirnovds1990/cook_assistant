@@ -138,3 +138,53 @@ class Follow(models.Model):
             f'{self.following.first_name} '
             f'{self.following.last_name}'
         )
+
+
+class RecipeFollow(models.Model):
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE,
+        related_name='%(app_label)s_%(class)s_related'
+    )
+    follower = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name='follower_%(app_label)s_%(class)s_related'
+    )
+
+    class Meta:
+        abstract = True
+        # constraints = [
+        #     models.UniqueConstraint(
+        #         fields=['follower', 'recipe'],
+        #         name='unique_following'
+        #     )
+        # ]
+
+
+class Favorite(RecipeFollow):
+    class Meta:
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранные'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['follower', 'recipe'],
+                name='unique_favorite'
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.recipe} (Подписчик: {self.follower})'
+
+
+class ShoppingCart(RecipeFollow):
+    class Meta:
+        verbose_name = 'Корзина покупок'
+        verbose_name_plural = 'Корзины покупок'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['follower', 'recipe'],
+                name='unique_shopping_cart'
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.recipe} (Подписчик: {self.follower})'
