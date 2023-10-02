@@ -1,6 +1,8 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from rest_framework import filters, mixins, permissions, status, viewsets
+from rest_framework import (
+    filters, mixins, permissions, serializers, status, viewsets
+)
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -27,6 +29,10 @@ class CustomUserViewSet(UserViewSet):
         user = request.user
         following = User.objects.get(id=id)
         if self.request.method == 'POST':
+            if user == following:
+                raise serializers.ValidationError(
+                    'Нельзя подписаться на самого себя!'
+                )
             follow = Follow.objects.create(follower=user, following=following)
             serializer = FollowSerializer(follow)
             return Response(serializer.data, status=status.HTTP_201_CREATED)

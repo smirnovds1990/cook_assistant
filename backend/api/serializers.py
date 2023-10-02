@@ -188,9 +188,7 @@ class UserWithRecipeSerializer(serializers.ModelSerializer):
 
 
 class FollowSerializer(serializers.ModelSerializer):
-    following = UserWithRecipeSerializer(
-        read_only=True, default=serializers.CurrentUserDefault()
-    )
+    following = UserWithRecipeSerializer()
 
     class Meta:
         model = Follow
@@ -206,21 +204,6 @@ class FollowSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         new_representation = representation.pop('following')
         return new_representation
-
-    def validate_following(self, value):
-        """Валидация подписки на самого себя."""
-        user = self.context['request'].user
-        if value == user:
-            raise serializers.ValidationError(
-                'Нельзя подписаться на самого себя!'
-            )
-        return value
-
-    # def create(self, validated_data):
-    #     user = self.context['request'].user
-    #     following_id = validated_data.get('following')['id']
-    #     following = User.objects.get(id=following_id)
-    #     return Follow.objects.create(follower=user, following=following)
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
