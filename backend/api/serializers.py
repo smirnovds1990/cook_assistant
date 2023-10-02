@@ -6,7 +6,8 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.models import (
-    Favorite, Follow, Ingridient, Recipe, RecipeIngridient, Tag, User
+    Favorite, Follow, Ingridient, Recipe, RecipeIngridient, ShoppingCart,
+    Tag, User
 )
 
 
@@ -211,6 +212,26 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Favorite
+        fields = ['recipe']
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Favorite.objects.all(),
+                fields=['follower', 'recipe']
+            )
+        ]
+
+    def to_representation(self, instance):
+        """Изменение формата вывода поля recipe."""
+        representation = super().to_representation(instance)
+        new_representation = representation.pop('recipe')
+        return new_representation
+
+
+class ShoppingCartSerializer(serializers.ModelSerializer):
+    recipe = RecipeReadForFollowerSerializer(read_only=True)
+
+    class Meta:
+        model = ShoppingCart
         fields = ['recipe']
         validators = [
             UniqueTogetherValidator(

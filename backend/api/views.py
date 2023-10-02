@@ -11,8 +11,8 @@ from recipes.models import (
 )
 from .serializers import (
     FavoriteSerializer, FollowSerializer, IngridientSerializer,
-    RecipeReadSerializer, RecipeWriteSerializer, TagSerializer,
-    UserSerializer
+    RecipeReadSerializer, RecipeWriteSerializer, ShoppingCartSerializer,
+    TagSerializer
 )
 
 
@@ -72,6 +72,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         favorite = Favorite.objects.get(follower=user, recipe=recipe)
         favorite.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(methods=['post', 'delete'], detail=True)
+    def shopping_cart(self, request, pk=None):
+        user = request.user
+        recipe = Recipe.objects.get(pk=pk)
+        if self.request.method == 'POST':
+            shopping_cart = ShoppingCart.objects.create(
+                follower=user, recipe=recipe
+            )
+            serializer = ShoppingCartSerializer(shopping_cart)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        shopping_cart = ShoppingCart.objects.get(follower=user, recipe=recipe)
+        shopping_cart.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

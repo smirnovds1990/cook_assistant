@@ -152,12 +152,6 @@ class RecipeFollow(models.Model):
 
     class Meta:
         abstract = True
-        # constraints = [
-        #     models.UniqueConstraint(
-        #         fields=['follower', 'recipe'],
-        #         name='unique_following'
-        #     )
-        # ]
 
 
 class Favorite(RecipeFollow):
