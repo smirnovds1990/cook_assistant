@@ -67,6 +67,15 @@ class RecipeIngridientReadSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'measurement_unit', 'amount']
 
 
+class DownloadShoppingCartSerializer(serializers.Serializer):
+    id = serializers.IntegerField(source='ingridient__id')
+    name = serializers.CharField(source='ingridient__name')
+    measurement_unit = serializers.CharField(
+        source='ingridient__measurement_unit'
+    )
+    amount = serializers.IntegerField()
+
+
 class RecipeIngridientWriteSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(queryset=Ingridient.objects.all())
 

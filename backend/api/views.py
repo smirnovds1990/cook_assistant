@@ -1,3 +1,4 @@
+from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from rest_framework import (
@@ -7,9 +8,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from recipes.models import (
-    Favorite, Follow, Ingridient, Recipe, ShoppingCart, Tag, User
+    Favorite, Follow, Ingridient, Recipe, RecipeIngridient, ShoppingCart, Tag,
+    User
 )
 from .serializers import (
+    DownloadShoppingCartSerializer,
     FavoriteSerializer, FollowSerializer, IngridientSerializer,
     RecipeReadSerializer, RecipeWriteSerializer, ShoppingCartSerializer,
     TagSerializer
@@ -87,6 +90,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
         shopping_cart = ShoppingCart.objects.get(follower=user, recipe=recipe)
         shopping_cart.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(methods=['get'], detail=False)
+    def download_shopping_cart(self, request):
+        user = request.user
+        shopping_carts = user.follower_recipes_shoppingcart_related.all()
+        recipes = [cart.recipe for cart in shopping_carts]
+        ingridients = RecipeIngridient.objects.filter(recipe__in=recipes)
+        ingridients = ingridients.values(
+            'ingridient__id', 'ingridient__name',
+            'ingridient__measurement_unit'
+        ).annotate(amount=Sum('amount'))
+        serializer = DownloadShoppingCartSerializer(ingridients, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class IngridientViewSet(viewsets.ModelViewSet):
