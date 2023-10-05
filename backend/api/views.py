@@ -1,5 +1,6 @@
 from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
+from django.http import HttpResponse
 from djoser.views import UserViewSet
 from rest_framework import (
     filters, mixins, permissions, serializers, status, viewsets
@@ -98,11 +99,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipes = [cart.recipe for cart in shopping_carts]
         ingridients = RecipeIngridient.objects.filter(recipe__in=recipes)
         ingridients = ingridients.values(
-            'ingridient__id', 'ingridient__name',
-            'ingridient__measurement_unit'
+            'ingridient__name', 'ingridient__measurement_unit'
         ).annotate(amount=Sum('amount'))
-        serializer = DownloadShoppingCartSerializer(ingridients, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        groceries_list = 'Список покупок:'
+        for ingridient in ingridients:
+            groceries_list += (
+                f'\n'
+                f'{ingridient["ingridient__name"]}'
+                f' - {ingridient["amount"]}'
+                f'{ingridient["ingridient__measurement_unit"]}'
+            )
+        response = HttpResponse(groceries_list, content_type='text/plain')
+        response['Content-Disposition'] = (
+            'attachment; filename=groceries_list.txt'
+        )
+        return response
 
 
 class IngridientViewSet(viewsets.ModelViewSet):
