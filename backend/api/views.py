@@ -13,7 +13,6 @@ from recipes.models import (
     User
 )
 from .serializers import (
-    DownloadShoppingCartSerializer,
     FavoriteSerializer, FollowSerializer, IngridientSerializer,
     RecipeReadSerializer, RecipeWriteSerializer, ShoppingCartSerializer,
     TagSerializer
