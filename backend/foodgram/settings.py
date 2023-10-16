@@ -150,3 +150,6 @@ REST_FRAMEWORK = {
 DJOSER = {
     'HIDE_USERS': False
 }
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = '/media'
