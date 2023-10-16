@@ -15,11 +15,15 @@ from recipes.models import (
 from .serializers import (
     FavoriteSerializer, FollowSerializer, IngridientSerializer,
     RecipeReadSerializer, RecipeWriteSerializer, ShoppingCartSerializer,
-    TagSerializer
+    TagSerializer, UserSerializer
 )
 
 
 class CustomUserViewSet(UserViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
     @action(methods=['get'], detail=False)
     def subscriptions(self, request):
         user = request.user
@@ -51,6 +55,7 @@ class TagViewSet(
 ):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
