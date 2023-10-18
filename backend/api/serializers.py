@@ -59,7 +59,7 @@ class TagSerializer(serializers.ModelSerializer):
 class IngridientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingridient
-        fields = ['name', 'measurement_unit']
+        fields = ['id', 'name', 'measurement_unit']
 
 
 class RecipeIngridientReadSerializer(serializers.ModelSerializer):
@@ -119,7 +119,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             'is_in_shopping_cart', 'name', 'image', 'text',
             'cooking_time'
         ]
-        read_only_fields = ['is_favorited', 'is_in_shopping_cart']
+        read_only_fields = ['is_favorited', 'is_in_shopping_cart', 'tags']
 
     def get_is_favorited(self, obj):
         if obj.recipes_favorite_related.filter(

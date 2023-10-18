@@ -8,6 +8,7 @@ from rest_framework import (
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from api.filters import RecipeTagFilter
 from recipes.models import (
     Favorite, Follow, Ingridient, Recipe, RecipeIngridient, ShoppingCart, Tag,
     User
@@ -56,18 +57,27 @@ class TagViewSet(
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    paginator = None
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['author', 'tags']
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = RecipeTagFilter
+    search_fields = ['ingridients__name']
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
             return RecipeReadSerializer
         return RecipeWriteSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        tags = self.request.query_params.getlist('tags')
+        if not tags:
+            return queryset.none()
+        return queryset.distinct()
 
     @action(methods=['post', 'delete'], detail=True)
     def favorite(self, request, pk=None):
@@ -125,3 +135,4 @@ class IngridientViewSet(viewsets.ModelViewSet):
     serializer_class = IngridientSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
+    paginator = None
