@@ -29,6 +29,10 @@ class CustomUserViewSet(UserViewSet):
     def subscriptions(self, request):
         user = request.user
         following = user.follower.all()
+        page = self.paginate_queryset(following)
+        if page is not None:
+            serializer = FollowSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = FollowSerializer(following, many=True)
         return Response(serializer.data)
 
@@ -72,12 +76,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeReadSerializer
         return RecipeWriteSerializer
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        tags = self.request.query_params.getlist('tags')
-        if not tags:
-            return queryset.none()
-        return queryset.distinct()
+    # def get_queryset(self):
+    #     queryset = super().get_queryset()
+    #     # author = self.request.query_params.get('author')
+    #     tags = self.request.query_params.getlist('tags')
+    #     # if author:
+    #     #     return queryset.filter(author=author.id)
+    #     if not tags:
+    #         return queryset.none()
+    #     return queryset.distinct()
 
     @action(methods=['post', 'delete'], detail=True)
     def favorite(self, request, pk=None):
