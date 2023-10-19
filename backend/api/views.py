@@ -10,11 +10,11 @@ from rest_framework.response import Response
 
 from api.filters import RecipeTagFilter
 from recipes.models import (
-    Favorite, Follow, Ingridient, Recipe, RecipeIngridient, ShoppingCart, Tag,
+    Favorite, Follow, Ingredient, Recipe, RecipeIngredient, ShoppingCart, Tag,
     User
 )
 from .serializers import (
-    FavoriteSerializer, FollowSerializer, IngridientSerializer,
+    FavoriteSerializer, FollowSerializer, IngredientSerializer,
     RecipeReadSerializer, RecipeWriteSerializer, ShoppingCartSerializer,
     TagSerializer, UserSerializer
 )
@@ -69,7 +69,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = RecipeTagFilter
-    search_fields = ['ingridients__name']
+    search_fields = ['ingredients__name']
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
@@ -118,17 +118,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
         shopping_carts = user.follower_recipes_shoppingcart_related.all()
         recipes = [cart.recipe for cart in shopping_carts]
-        ingridients = RecipeIngridient.objects.filter(recipe__in=recipes)
-        ingridients = ingridients.values(
-            'ingridient__name', 'ingridient__measurement_unit'
+        ingredients = RecipeIngredient.objects.filter(recipe__in=recipes)
+        ingredients = ingredients.values(
+            'ingredient__name', 'ingredient__measurement_unit'
         ).annotate(amount=Sum('amount'))
         groceries_list = 'Список покупок:'
-        for ingridient in ingridients:
+        for ingredient in ingredients:
             groceries_list += (
                 f'\n'
-                f'{ingridient["ingridient__name"]}'
-                f' - {ingridient["amount"]}'
-                f'{ingridient["ingridient__measurement_unit"]}'
+                f'{ingredient["ingredient__name"]}'
+                f' - {ingredient["amount"]}'
+                f'{ingredient["ingredient__measurement_unit"]}'
             )
         response = HttpResponse(groceries_list, content_type='text/plain')
         response['Content-Disposition'] = (
@@ -137,9 +137,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return response
 
 
-class IngridientViewSet(viewsets.ModelViewSet):
-    queryset = Ingridient.objects.all()
-    serializer_class = IngridientSerializer
+class IngredientViewSet(viewsets.ModelViewSet):
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
     paginator = None

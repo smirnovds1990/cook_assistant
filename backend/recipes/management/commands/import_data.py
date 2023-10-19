@@ -2,7 +2,7 @@ import csv
 
 from django.core.management.base import BaseCommand, CommandParser
 
-from recipes.models import Ingridient
+from recipes.models import Ingredient
 
 
 class Command(BaseCommand):
@@ -15,7 +15,7 @@ class Command(BaseCommand):
         with open(options['csv_file'], newline='') as file:
             reader = csv.reader(file)
             for row in reader:
-                _, created = Ingridient.objects.get_or_create(
+                _, created = Ingredient.objects.get_or_create(
                     name=row[0],
                     measurement_unit=row[1]
                 )

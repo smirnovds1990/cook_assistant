@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .models import (
-    Favorite, Follow, Ingridient, Recipe, RecipeIngridient, ShoppingCart,
+    Favorite, Follow, Ingredient, Recipe, RecipeIngredient, ShoppingCart,
     Tag, User
 )
 
@@ -18,7 +18,7 @@ class RecipeAdmin(admin.ModelAdmin):
     list_filter = ['author', 'name', 'tags']
 
 
-class IngridientAdmin(admin.ModelAdmin):
+class IngredientAdmin(admin.ModelAdmin):
     readonly_fields = ['id']
     list_filter = ['name']
     search_fields = ['name']
@@ -26,9 +26,9 @@ class IngridientAdmin(admin.ModelAdmin):
 
 admin.site.register(User, UserAdmin)
 admin.site.register(Recipe, RecipeAdmin)
-admin.site.register(Ingridient, IngridientAdmin)
+admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Tag)
-admin.site.register(RecipeIngridient)
+admin.site.register(RecipeIngredient)
 admin.site.register(Follow)
 admin.site.register(Favorite)
 admin.site.register(ShoppingCart)

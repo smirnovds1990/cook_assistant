@@ -26,7 +26,7 @@ class User(AbstractUser):
         return f'{self.first_name} {self.last_name} ({self.username})'
 
 
-class Ingridient(models.Model):
+class Ingredient(models.Model):
     name = models.CharField(max_length=200, verbose_name='Название')
     measurement_unit = models.CharField(
         max_length=200, verbose_name='Единицы измерения'
@@ -62,8 +62,8 @@ class Recipe(models.Model):
     tags = models.ManyToManyField(
         Tag, verbose_name='Теги', related_name='recipes'
     )
-    ingridients = models.ManyToManyField(
-        Ingridient, through='RecipeIngridient', related_name='recipes',
+    ingredients = models.ManyToManyField(
+        Ingredient, through='RecipeIngredient', related_name='recipes',
         verbose_name='Список ингридиентов'
     )
     is_favorited = models.BooleanField(
@@ -94,11 +94,11 @@ class Recipe(models.Model):
         return f'{self.name} ({self.author})'
 
 
-class RecipeIngridient(models.Model):
+class RecipeIngredient(models.Model):
     """Промежуточная модель для добавления количества ингридиента."""
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    ingridient = models.ForeignKey(
-        Ingridient, on_delete=models.CASCADE, related_name='ingridient_amount'
+    ingredient = models.ForeignKey(
+        Ingredient, on_delete=models.CASCADE, related_name='ingredient_amount'
     )
     amount = models.PositiveSmallIntegerField(verbose_name='Количество')
 
@@ -107,7 +107,7 @@ class RecipeIngridient(models.Model):
         verbose_name_plural = 'Ингридиенты в рецептах'
 
     def __str__(self):
-        return f'{self.ingridient.name} ({self.recipe.name})'
+        return f'{self.ingredient.name} ({self.recipe.name})'
 
 
 class Follow(models.Model):
