@@ -25,10 +25,6 @@ class CustomUserViewSet(UserViewSet):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-    # def get_queryset(self):
-    #     author = self.kwargs['id']
-    #     return Recipe.objects.filter(author=author)
-
     @action(methods=['get'], detail=False)
     def subscriptions(self, request):
         user = request.user
@@ -71,9 +67,8 @@ class TagViewSet(
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend]
     filterset_class = RecipeTagFilter
-    search_fields = ['ingredients__name']
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
@@ -138,8 +133,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
-    queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['name']
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     paginator = None
+
+    def get_queryset(self):
+        queryset = Ingredient.objects.all()
+        name = self.request.query_params.get('name', None)
+        if name is not None:
+            queryset = queryset.filter(name__startswith=name)
+        return queryset

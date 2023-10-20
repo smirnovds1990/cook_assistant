@@ -43,9 +43,12 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['is_subscribed']
 
     def get_is_subscribed(self, obj):
-        if obj.follower:
-            return False
-        return True
+        user_id = self.context['request'].user.id
+        if Follow.objects.filter(
+            follower__id=user_id, following__id=obj.id
+        ).exists():
+            return True
+        return False
 
 
 class TagSerializer(serializers.ModelSerializer):
