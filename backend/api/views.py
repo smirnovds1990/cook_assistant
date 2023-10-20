@@ -25,6 +25,10 @@ class CustomUserViewSet(UserViewSet):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+    # def get_queryset(self):
+    #     author = self.kwargs['id']
+    #     return Recipe.objects.filter(author=author)
+
     @action(methods=['get'], detail=False)
     def subscriptions(self, request):
         user = request.user
@@ -76,15 +80,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeReadSerializer
         return RecipeWriteSerializer
 
-    # def get_queryset(self):
-    #     queryset = super().get_queryset()
-    #     # author = self.request.query_params.get('author')
-    #     tags = self.request.query_params.getlist('tags')
-    #     # if author:
-    #     #     return queryset.filter(author=author.id)
-    #     if not tags:
-    #         return queryset.none()
-    #     return queryset.distinct()
+    def get_queryset(self):
+        author = self.request.query_params.get('author')
+        if author:
+            return Recipe.objects.filter(author__id=author)
+        return super().get_queryset()
 
     @action(methods=['post', 'delete'], detail=True)
     def favorite(self, request, pk=None):
