@@ -44,8 +44,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         if obj.follower:
-            return True
-        return False
+            return False
+        return True
 
 
 class TagSerializer(serializers.ModelSerializer):
