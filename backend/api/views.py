@@ -3,7 +3,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponse
 from djoser.views import UserViewSet
 from rest_framework import (
-    filters, mixins, permissions, serializers, status, viewsets
+    mixins, permissions, serializers, status, viewsets
 )
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -76,10 +76,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return RecipeWriteSerializer
 
     def get_queryset(self):
-        author = self.request.query_params.get('author')
-        if author:
-            return Recipe.objects.filter(author__id=author)
-        return super().get_queryset()
+        queryset = super().get_queryset()
+        user = self.request.user
+        if self.request.GET.get('author'):
+            queryset = queryset.filter(
+                author__id=self.request.GET.get('author')
+            )
+        if self.request.GET.get('is_favorited') == '1':
+            queryset = queryset.filter(recipes_favorite_related__follower=user)
+        if self.request.GET.get('is_in_shopping_cart') == '1':
+            queryset = queryset.filter(
+                recipes_shoppingcart_related__follower=user
+            )
+        return queryset
 
     @action(methods=['post', 'delete'], detail=True)
     def favorite(self, request, pk=None):
