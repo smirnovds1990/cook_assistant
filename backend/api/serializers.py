@@ -9,12 +9,13 @@ from recipes.models import (
     Favorite, Follow, Ingredient, Recipe, RecipeIngredient, ShoppingCart,
     Tag, User
 )
+from recipes.constants import REGEX_FOR_HEX_COLOR
 
 
 class ColorField(serializers.CharField):
     """Валидация цвета для поля модели Tag."""
     def to_internal_value(self, data):
-        if not re.match('^#(?:[0-9a-fA-F]{3}){1,2}$', data):
+        if not re.match(REGEX_FOR_HEX_COLOR, data):
             raise serializers.ValidationError(
                 'Такого цвета нет. Пожалуйста, используйте другой цвет.'
             )

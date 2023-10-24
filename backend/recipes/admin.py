@@ -7,14 +7,12 @@ from .models import (
 
 
 class UserAdmin(admin.ModelAdmin):
-    readonly_fields = ('is_subscribed', )
+    # readonly_fields = ('is_subscribed', )
     list_filter = ['email', 'username']
 
 
 class RecipeAdmin(admin.ModelAdmin):
-    readonly_fields = (
-        'is_in_shopping_cart', 'is_favorited', 'publication_date'
-    )
+    readonly_fields = ('publication_date', )
     list_filter = ['author', 'name', 'tags']
 
 
