@@ -1,19 +1,30 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from .constants import MAX_COLOR_FIELD_LENGTH, MAX_MODEL_FIELD_LENGTH
+from .validators import (
+    validate_ingredient_amount, validate_cooking_time, validate_hex_color
+)
+
 
 class User(AbstractUser):
     email = models.EmailField(
-        max_length=254, verbose_name='электронная почта', unique=True
+        max_length=MAX_MODEL_FIELD_LENGTH, verbose_name='электронная почта',
+        unique=True
     )
     username = models.CharField(
-        max_length=150, verbose_name='имя пользователя', unique=True
+        max_length=MAX_MODEL_FIELD_LENGTH, verbose_name='имя пользователя',
+        unique=True
     )
-    first_name = models.CharField(max_length=150, verbose_name='Имя')
-    last_name = models.CharField(max_length=150, verbose_name='Фамилия')
-    is_subscribed = models.BooleanField(
-        verbose_name='Подписки', null=True, blank=True, default=False
+    first_name = models.CharField(
+        max_length=MAX_MODEL_FIELD_LENGTH, verbose_name='Имя'
     )
+    last_name = models.CharField(
+        max_length=MAX_MODEL_FIELD_LENGTH, verbose_name='Фамилия'
+    )
+    # is_subscribed = models.BooleanField(
+    #     verbose_name='Подписки', null=True, blank=True, default=False
+    # )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
@@ -27,24 +38,39 @@ class User(AbstractUser):
 
 
 class Ingredient(models.Model):
-    name = models.CharField(max_length=200, verbose_name='Название')
+    name = models.CharField(
+        max_length=MAX_MODEL_FIELD_LENGTH, verbose_name='Название'
+    )
     measurement_unit = models.CharField(
-        max_length=200, verbose_name='Единицы измерения'
+        max_length=MAX_MODEL_FIELD_LENGTH, verbose_name='Единицы измерения'
     )
 
     class Meta:
         verbose_name = 'Ингридиент'
         verbose_name_plural = 'Ингридиенты'
         ordering = ['name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'measurement_unit'],
+                name='unique_ingredient'
+            )
+        ]
 
     def __str__(self):
         return f'{self.name}, {self.measurement_unit}'
 
 
 class Tag(models.Model):
-    name = models.CharField(max_length=200, verbose_name='Тег')
-    color = models.CharField(max_length=7, verbose_name='Цвет', null=True)
-    slug = models.CharField(max_length=200, null=True)
+    name = models.CharField(
+        max_length=MAX_MODEL_FIELD_LENGTH, verbose_name='Тег'
+    )
+    color = models.CharField(
+        max_length=MAX_COLOR_FIELD_LENGTH, verbose_name='Цвет', null=True,
+        validators=[validate_hex_color]
+    )
+    slug = models.CharField(
+        max_length=MAX_MODEL_FIELD_LENGTH, null=True
+    )
 
     class Meta:
         verbose_name = 'Тег'
@@ -67,20 +93,21 @@ class Recipe(models.Model):
         Ingredient, through='RecipeIngredient', related_name='recipes',
         verbose_name='Список ингридиентов'
     )
-    is_favorited = models.BooleanField(
-        blank=True, default=False, verbose_name='Избранное'
-    )
-    is_in_shopping_cart = models.BooleanField(
-        blank=True, default=False, verbose_name='Список покупок'
-    )
+    # is_favorited = models.BooleanField(
+    #     blank=True, default=False, verbose_name='Избранное'
+    # )
+    # is_in_shopping_cart = models.BooleanField(
+    #     blank=True, default=False, verbose_name='Список покупок'
+    # )
     name = models.CharField(max_length=200, verbose_name='Название')
     image = models.ImageField(
         verbose_name='Фотография', upload_to='recipes/images/', null=True,
         default=None, blank=True
     )
     text = models.TextField(verbose_name='Описание')
-    cooking_time = models.IntegerField(
-        verbose_name='Время приготовления (в минутах)'
+    cooking_time = models.PositiveSmallIntegerField(
+        verbose_name='Время приготовления (в минутах)',
+        validators=[validate_cooking_time]
     )
     publication_date = models.DateTimeField(
         auto_now_add=True, verbose_name='Дата публикации'
@@ -101,7 +128,9 @@ class RecipeIngredient(models.Model):
     ingredient = models.ForeignKey(
         Ingredient, on_delete=models.CASCADE, related_name='ingredient_amount'
     )
-    amount = models.PositiveSmallIntegerField(verbose_name='Количество')
+    amount = models.PositiveSmallIntegerField(
+        verbose_name='Количество', validators=[validate_ingredient_amount]
+    )
 
     class Meta:
         verbose_name = 'Ингридиент в рецепте'
@@ -132,12 +161,8 @@ class Follow(models.Model):
 
     def __str__(self):
         return (
-            f'Follower: '
-            f'{self.follower.first_name} '
-            f'{self.follower.last_name}; '
-            f'Following: '
-            f'{self.following.first_name} '
-            f'{self.following.last_name}'
+            f'Follower: {self.follower.get_full_name()}'
+            f'Following: {self.follower.get_full_name()}'
         )
 
 
