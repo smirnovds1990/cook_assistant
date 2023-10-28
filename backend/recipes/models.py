@@ -22,9 +22,6 @@ class User(AbstractUser):
     last_name = models.CharField(
         max_length=MAX_MODEL_FIELD_LENGTH, verbose_name='Фамилия'
     )
-    # is_subscribed = models.BooleanField(
-    #     verbose_name='Подписки', null=True, blank=True, default=False
-    # )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
@@ -46,8 +43,8 @@ class Ingredient(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Ингридиент'
-        verbose_name_plural = 'Ингридиенты'
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
         ordering = ['name']
         constraints = [
             models.UniqueConstraint(
@@ -91,14 +88,8 @@ class Recipe(models.Model):
     )
     ingredients = models.ManyToManyField(
         Ingredient, through='RecipeIngredient', related_name='recipes',
-        verbose_name='Список ингридиентов'
+        verbose_name='Список ингредиентов'
     )
-    # is_favorited = models.BooleanField(
-    #     blank=True, default=False, verbose_name='Избранное'
-    # )
-    # is_in_shopping_cart = models.BooleanField(
-    #     blank=True, default=False, verbose_name='Список покупок'
-    # )
     name = models.CharField(max_length=200, verbose_name='Название')
     image = models.ImageField(
         verbose_name='Фотография', upload_to='recipes/images/', null=True,
@@ -123,7 +114,7 @@ class Recipe(models.Model):
 
 
 class RecipeIngredient(models.Model):
-    """Промежуточная модель для добавления количества ингридиента."""
+    """Промежуточная модель для добавления количества ингредиента."""
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     ingredient = models.ForeignKey(
         Ingredient, on_delete=models.CASCADE, related_name='ingredient_amount'
@@ -133,8 +124,8 @@ class RecipeIngredient(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Ингридиент в рецепте'
-        verbose_name_plural = 'Ингридиенты в рецептах'
+        verbose_name = 'Ингредиент в рецепте'
+        verbose_name_plural = 'Ингредиенты в рецептах'
 
     def __str__(self):
         return f'{self.ingredient.name} ({self.recipe.name})'
@@ -161,8 +152,8 @@ class Follow(models.Model):
 
     def __str__(self):
         return (
-            f'Follower: {self.follower.get_full_name()}'
-            f'Following: {self.follower.get_full_name()}'
+            f'Follower: {self.follower.get_full_name()} '
+            f'Following: {self.following.get_full_name()}'
         )
 
 

@@ -1,14 +1,13 @@
-from django.db.models import Sum
+from django.db.models import Exists, OuterRef, Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
-from rest_framework import (
-    mixins, permissions, serializers, status, viewsets
-)
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from api.filters import RecipeTagFilter
+from api.filters import IngredientFilter, RecipeFilter
 from recipes.models import (
     Favorite, Follow, Ingredient, Recipe, RecipeIngredient, ShoppingCart, Tag,
     User
@@ -41,23 +40,19 @@ class CustomUserViewSet(UserViewSet):
         user = request.user
         following = User.objects.get(id=id)
         if self.request.method == 'POST':
-            if user == following:
-                raise serializers.ValidationError(
-                    'Нельзя подписаться на самого себя!'
-                )
-            follow = Follow.objects.create(follower=user, following=following)
-            serializer = FollowSerializer(follow)
+            serializer = FollowSerializer(
+                data={'follower': user.id, 'following': id},
+                context={'request': request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        follow = Follow.objects.get(follower=user, following=following)
+        follow = get_object_or_404(Follow, follower=user, following=following)
         follow.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TagViewSet(
-    mixins.ListModelMixin,
-    mixins.RetrieveModelMixin,
-    viewsets.GenericViewSet
-):
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
@@ -65,41 +60,46 @@ class TagViewSet(
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend]
-    filterset_class = RecipeTagFilter
+    filterset_class = RecipeFilter
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Recipe.objects.all()
+        if user.is_authenticated:
+            queryset = queryset.annotate(
+                is_favorited=Exists(
+                    Favorite.objects.filter(
+                        follower=user, recipe_id=OuterRef('id')
+                    )
+                ),
+                is_in_shopping_cart=Exists(
+                    ShoppingCart.objects.filter(
+                        follower=user, recipe_id=OuterRef('id')
+                    )
+                )
+            )
+        return queryset
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
             return RecipeReadSerializer
         return RecipeWriteSerializer
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        user = self.request.user
-        if self.request.GET.get('author'):
-            queryset = queryset.filter(
-                author__id=self.request.GET.get('author')
-            )
-        if self.request.GET.get('is_favorited') == '1':
-            queryset = queryset.filter(recipes_favorite_related__follower=user)
-        if self.request.GET.get('is_in_shopping_cart') == '1':
-            queryset = queryset.filter(
-                recipes_shoppingcart_related__follower=user
-            )
-        return queryset
-
     @action(methods=['post', 'delete'], detail=True)
     def favorite(self, request, pk=None):
         user = request.user
         recipe = Recipe.objects.get(pk=pk)
         if self.request.method == 'POST':
-            favorite = Favorite.objects.create(
-                follower=user, recipe=recipe)
-            serializer = FavoriteSerializer(favorite)
+            serializer = FavoriteSerializer(
+                data={'follower': user.id, 'recipe': pk},
+                context={'request': request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        favorite = Favorite.objects.get(follower=user, recipe=recipe)
+        favorite = get_object_or_404(Favorite, follower=user, recipe=recipe)
         favorite.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -108,19 +108,27 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
         recipe = Recipe.objects.get(pk=pk)
         if self.request.method == 'POST':
-            shopping_cart = ShoppingCart.objects.create(
-                follower=user, recipe=recipe
+            serializer = ShoppingCartSerializer(
+                data={'follower': user.id, 'recipe': pk},
+                context={'request': request}
             )
-            serializer = ShoppingCartSerializer(shopping_cart)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        shopping_cart = ShoppingCart.objects.get(follower=user, recipe=recipe)
+        shopping_cart = get_object_or_404(
+            ShoppingCart, follower=user, recipe=recipe
+        )
         shopping_cart.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(methods=['get'], detail=False)
     def download_shopping_cart(self, request):
         user = request.user
-        shopping_carts = user.follower_recipes_shoppingcart_related.all()
+        shopping_carts = (
+            user.follower_recipes_shoppingcart_related.all().prefetch_related(
+                'recipe'
+            )
+        )
         recipes = [cart.recipe for cart in shopping_carts]
         ingredients = RecipeIngredient.objects.filter(recipe__in=recipes)
         ingredients = ingredients.values(
@@ -142,13 +150,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
+    queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     paginator = None
-
-    def get_queryset(self):
-        queryset = Ingredient.objects.all()
-        name = self.request.query_params.get('name', None)
-        if name is not None:
-            queryset = queryset.filter(name__startswith=name)
-        return queryset
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = IngredientFilter
