@@ -1,7 +1,11 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
 
-from .constants import MAX_COLOR_FIELD_LENGTH, MAX_MODEL_FIELD_LENGTH
+from .constants import (
+    MAX_COLOR_FIELD_LENGTH, MAX_EMAIL_LENGTH, MAX_FIELD_LENGTH,
+    MAX_NAMES_LENGTH
+)
 from .validators import (
     validate_ingredient_amount, validate_cooking_time, validate_hex_color
 )
@@ -9,18 +13,18 @@ from .validators import (
 
 class User(AbstractUser):
     email = models.EmailField(
-        max_length=MAX_MODEL_FIELD_LENGTH, verbose_name='электронная почта',
+        max_length=MAX_EMAIL_LENGTH, verbose_name='электронная почта',
         unique=True
     )
     username = models.CharField(
-        max_length=MAX_MODEL_FIELD_LENGTH, verbose_name='имя пользователя',
+        max_length=MAX_NAMES_LENGTH, verbose_name='имя пользователя',
         unique=True
     )
     first_name = models.CharField(
-        max_length=MAX_MODEL_FIELD_LENGTH, verbose_name='Имя'
+        max_length=MAX_NAMES_LENGTH, verbose_name='Имя'
     )
     last_name = models.CharField(
-        max_length=MAX_MODEL_FIELD_LENGTH, verbose_name='Фамилия'
+        max_length=MAX_NAMES_LENGTH, verbose_name='Фамилия'
     )
 
     USERNAME_FIELD = 'email'
@@ -36,10 +40,10 @@ class User(AbstractUser):
 
 class Ingredient(models.Model):
     name = models.CharField(
-        max_length=MAX_MODEL_FIELD_LENGTH, verbose_name='Название'
+        max_length=MAX_FIELD_LENGTH, verbose_name='Название'
     )
     measurement_unit = models.CharField(
-        max_length=MAX_MODEL_FIELD_LENGTH, verbose_name='Единицы измерения'
+        max_length=MAX_FIELD_LENGTH, verbose_name='Единицы измерения'
     )
 
     class Meta:
@@ -59,14 +63,14 @@ class Ingredient(models.Model):
 
 class Tag(models.Model):
     name = models.CharField(
-        max_length=MAX_MODEL_FIELD_LENGTH, verbose_name='Тег'
+        max_length=MAX_FIELD_LENGTH, verbose_name='Тег'
     )
     color = models.CharField(
         max_length=MAX_COLOR_FIELD_LENGTH, verbose_name='Цвет', null=True,
         validators=[validate_hex_color]
     )
     slug = models.CharField(
-        max_length=MAX_MODEL_FIELD_LENGTH, null=True
+        max_length=MAX_FIELD_LENGTH, null=True
     )
 
     class Meta:
@@ -90,7 +94,9 @@ class Recipe(models.Model):
         Ingredient, through='RecipeIngredient', related_name='recipes',
         verbose_name='Список ингредиентов'
     )
-    name = models.CharField(max_length=200, verbose_name='Название')
+    name = models.CharField(
+        max_length=MAX_FIELD_LENGTH, verbose_name='Название'
+    )
     image = models.ImageField(
         verbose_name='Фотография', upload_to='recipes/images/', null=True,
         default=None, blank=True
@@ -133,10 +139,10 @@ class RecipeIngredient(models.Model):
 
 class Follow(models.Model):
     """Модель для подписок на пользователей."""
-    follower = models.ForeignKey(
+    user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='follower'
     )
-    following = models.ForeignKey(
+    author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='following'
     )
 
@@ -145,15 +151,20 @@ class Follow(models.Model):
         verbose_name_plural = 'Подписки'
         constraints = [
             models.UniqueConstraint(
-                fields=['follower', 'following'],
+                fields=['user', 'author'],
                 name='unique_follow'
             )
         ]
 
+    def save(self, *args, **kwargs):
+        if self.user == self.author:
+            raise ValidationError('Нельзя подписаться на самого себя!')
+        return super().save(*args, **kwargs)
+
     def __str__(self):
         return (
-            f'Follower: {self.follower.get_full_name()} '
-            f'Following: {self.following.get_full_name()}'
+            f'User: {self.user.get_full_name()} '
+            f'Author: {self.author.get_full_name()}'
         )
 
 

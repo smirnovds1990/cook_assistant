@@ -8,23 +8,18 @@ class RecipeFilter(rest_framework.FilterSet):
         field_name='tags__slug', to_field_name='slug',
         queryset=Tag.objects.all()
     )
+    is_favorited = rest_framework.BooleanFilter()
+    is_in_shopping_cart = rest_framework.BooleanFilter()
 
     class Meta:
         model = Recipe
-        fields = ['tags', 'author']
+        fields = ['tags', 'author', 'is_favorited', 'is_in_shopping_cart']
 
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
-        user = self.request.user
         if self.request.GET.get('author'):
             queryset = queryset.filter(
                 author__id=self.request.GET.get('author')
-            )
-        if self.request.GET.get('is_favorited') == '1':
-            queryset = queryset.filter(recipes_favorite_related__follower=user)
-        if self.request.GET.get('is_in_shopping_cart') == '1':
-            queryset = queryset.filter(
-                recipes_shoppingcart_related__follower=user
             )
         return queryset
 

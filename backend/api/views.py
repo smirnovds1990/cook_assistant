@@ -30,9 +30,13 @@ class CustomUserViewSet(UserViewSet):
         following = user.follower.all()
         page = self.paginate_queryset(following)
         if page is not None:
-            serializer = FollowSerializer(page, many=True)
+            serializer = FollowSerializer(
+                page, many=True, context={'request': request}
+            )
             return self.get_paginated_response(serializer.data)
-        serializer = FollowSerializer(following, many=True)
+        serializer = FollowSerializer(
+            following, many=True, context={'request': request}
+        )
         return Response(serializer.data)
 
     @action(methods=['post', 'delete'], detail=True)
@@ -41,13 +45,13 @@ class CustomUserViewSet(UserViewSet):
         following = User.objects.get(id=id)
         if self.request.method == 'POST':
             serializer = FollowSerializer(
-                data={'follower': user.id, 'following': id},
+                data={'user': user.id, 'author': id},
                 context={'request': request}
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        follow = get_object_or_404(Follow, follower=user, following=following)
+        follow = get_object_or_404(Follow, user=user, author=following)
         follow.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
