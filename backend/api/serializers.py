@@ -158,10 +158,14 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'У рецепта должно быть изображение.'
             )
-        if not value.name.endswith('.jpg') and not value.name.endswith('.png'):
+        if (
+            not value.name.lower().endswith('.jpg')
+            and not value.name.lower().endswith('.jpeg')
+            and not value.name.lower().endswith('.png')
+        ):
             raise serializers.ValidationError(
                 'Неверный формат файла. '
-                'Загрузите файл в формате .jpg или .png.'
+                'Загрузите файл в формате .jpg, .jpeg, .png.'
             )
         return value
 
