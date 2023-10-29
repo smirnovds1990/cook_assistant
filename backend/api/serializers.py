@@ -137,7 +137,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'Нельзя создать рецепт без ингредиентов!'
             )
-        if len(value) != len(set(value)):
+        ingredient_ids = [ingredient['id'].id for ingredient in value]
+        if len(ingredient_ids) != len(set(ingredient_ids)):
             raise serializers.ValidationError(
                 'Ингредиенты не должны повторяться!'
             )
