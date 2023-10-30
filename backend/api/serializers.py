@@ -9,7 +9,9 @@ from recipes.models import (
     Favorite, Follow, Ingredient, Recipe, RecipeIngredient, ShoppingCart,
     Tag, User
 )
-from recipes.constants import MIN_AMOUNT, MIN_COOKING_TIME, REGEX_FOR_HEX_COLOR
+from recipes.constants import (
+    MIN_AMOUNT, MIN_COOKING_TIME, RECIPES_LIMIT, REGEX_FOR_HEX_COLOR
+)
 
 
 class ColorField(serializers.CharField):
@@ -48,7 +50,7 @@ class UserSerializer(serializers.ModelSerializer):
             self.context['request'].user.is_authenticated
             and self.context['request'].user != obj
             and self.context['request'].user.follower.filter(
-                author__id=obj.id
+                author_id=obj.id
             ).exists()
         )
 
@@ -158,15 +160,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'У рецепта должно быть изображение.'
             )
-        if (
-            not value.name.lower().endswith('.jpg')
-            and not value.name.lower().endswith('.jpeg')
-            and not value.name.lower().endswith('.png')
-        ):
-            raise serializers.ValidationError(
-                'Неверный формат файла. '
-                'Загрузите файл в формате .jpg, .jpeg, .png.'
-            )
         return value
 
     def validate_text(self, value):
@@ -246,8 +239,17 @@ class UserWithRecipeSerializer(UserSerializer):
         ]
 
     def get_recipes(self, obj):
-        limit = self.context['request'].query_params.get('recipes_limit', 3)
-        recipes = obj.recipes.all()[:int(limit)]
+        limit = self.context['request'].query_params.get(
+            'recipes_limit', RECIPES_LIMIT
+        )
+        if limit is not None:
+            try:
+                limit = int(limit)
+            except ValueError:
+                raise ValueError(
+                    'Парамерт "recipes_limit" должен быть числом.'
+                )
+        recipes = obj.recipes.all()[:limit]
         serializer = ShortRecipeReadSerializer(recipes, many=True)
         return serializer.data
 
@@ -295,8 +297,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         """Изменение формата вывода поля recipe."""
-        representation = ShortRecipeReadSerializer(instance.recipe).data
-        return representation
+        return ShortRecipeReadSerializer(instance.recipe).data
 
 
 class ShoppingCartSerializer(serializers.ModelSerializer):
@@ -313,5 +314,4 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         """Изменение формата вывода поля recipe."""
-        representation = ShortRecipeReadSerializer(instance.recipe).data
-        return representation
+        return ShortRecipeReadSerializer(instance.recipe).data

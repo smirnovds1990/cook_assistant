@@ -156,10 +156,9 @@ class Follow(models.Model):
             )
         ]
 
-    def save(self, *args, **kwargs):
+    def clean(self):
         if self.user == self.author:
             raise ValidationError('Нельзя подписаться на самого себя!')
-        return super().save(*args, **kwargs)
 
     def __str__(self):
         return (

@@ -128,14 +128,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=False)
     def download_shopping_cart(self, request):
         user = request.user
-        shopping_carts = (
-            user.follower_recipes_shoppingcart_related.all().prefetch_related(
-                'recipe'
-            )
-        )
-        recipes = [cart.recipe for cart in shopping_carts]
-        ingredients = RecipeIngredient.objects.filter(recipe__in=recipes)
-        ingredients = ingredients.values(
+        ingredients = RecipeIngredient.objects.filter(
+            recipe__recipes_shoppingcart_related__follower_id=user.id
+        ).values(
             'ingredient__name', 'ingredient__measurement_unit'
         ).annotate(amount=Sum('amount'))
         groceries_list = 'Список покупок:'
@@ -153,7 +148,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return response
 
 
-class IngredientViewSet(viewsets.ModelViewSet):
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
