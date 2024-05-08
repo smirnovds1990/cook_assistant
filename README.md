@@ -1,14 +1,8 @@
-# Foodgram (Продуктовый помощник)
+# Cook assistant
 
 ![Main Foodgram Workflow](https://github.com/smirnovds1990/foodgram-project-react/actions/workflows/main.yml/badge.svg)
 
 Проект "Продуктовый помощник" - это сайт для выкладывания рецептов. Пользователь регистрируется на сайте, может создавать рецепты, добавлять их в избранное, подписываться на других пользователей. Так же есть возможность добавить рецепты в список покупок, из которого потом можно скачать файл со списком продуктов.
-
-https://somedomainname.ddns.net/
-
-Данные администратора:
-email - superuser@mail.ru
-password - 789asd456asd
 
 ### Технологии
 - Nginx
